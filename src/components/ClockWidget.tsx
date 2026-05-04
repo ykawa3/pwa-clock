@@ -1,7 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Box, Typography, IconButton, Tooltip } from '@mui/material'
-import FullscreenIcon from '@mui/icons-material/Fullscreen'
-import FullscreenExitIcon from '@mui/icons-material/FullscreenExit'
+import { useState, useEffect } from 'react'
+import { Box, Typography } from '@mui/material'
 import { useSettings } from '../context/SettingsContext'
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
@@ -34,41 +32,14 @@ function formatDate(date: Date): string {
 export default function ClockWidget() {
   const { settings } = useSettings()
   const [now, setNow] = useState(new Date())
-  const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(id)
   }, [])
 
-  useEffect(() => {
-    function onFsChange() {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
-    document.addEventListener('fullscreenchange', onFsChange)
-    return () => document.removeEventListener('fullscreenchange', onFsChange)
-  }, [])
-
-  const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen()
-    } else {
-      document.exitFullscreen()
-    }
-  }, [])
-
   return (
-    <Box sx={{ textAlign: 'center', userSelect: 'none', position: 'relative' }}>
-      <Tooltip title={isFullscreen ? 'フルスクリーン終了' : 'フルスクリーン'}>
-        <IconButton
-          onClick={toggleFullscreen}
-          size="small"
-          sx={{ position: 'absolute', top: 0, right: 0, opacity: 0.5 }}
-        >
-          {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
-        </IconButton>
-      </Tooltip>
-
+    <Box sx={{ textAlign: 'center', userSelect: 'none' }}>
       <Typography
         variant="h1"
         sx={{

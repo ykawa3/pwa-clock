@@ -51,7 +51,10 @@ export default function WeatherWidget() {
       const { latitude: lat, longitude: lon } = pos.coords
       const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${settings.weatherApiKey}&units=metric&lang=ja`
       const res = await fetch(url)
-      if (!res.ok) throw new Error(`API error: ${res.status}`)
+      if (!res.ok) {
+        if (res.status === 401) throw new Error('APIキーが無効です。発行直後は有効化まで最大2時間かかります')
+        throw new Error(`天気の取得に失敗しました (${res.status})`)
+      }
       const data = await res.json()
       setWeather({
         temp: Math.round(data.main.temp),
@@ -62,7 +65,14 @@ export default function WeatherWidget() {
         feelsLike: Math.round(data.main.feels_like),
       })
     } catch (e) {
-      setError(e instanceof Error ? e.message : '天気の取得に失敗しました')
+      if (e && typeof e === 'object' && 'code' in e) {
+        const code = (e as GeolocationPositionError).code
+        if (code === 1) setError('位置情報へのアクセスが拒否されました。ブラウザの設定を確認してください')
+        else if (code === 3) setError('位置情報の取得がタイムアウトしました')
+        else setError('位置情報を取得できませんでした')
+      } else {
+        setError(e instanceof Error ? e.message : '天気の取得に失敗しました')
+      }
     } finally {
       setLoading(false)
     }

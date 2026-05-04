@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Box, IconButton, Tooltip } from '@mui/material'
 import SettingsIcon from '@mui/icons-material/Settings'
+import FullscreenIcon from '@mui/icons-material/Fullscreen'
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit'
 import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../context/SettingsContext'
 import ClockWidget from '../components/ClockWidget'
@@ -40,14 +42,34 @@ export default function Dashboard() {
   const { settings } = useSettings()
   const isLandscape = useIsLandscape()
   const isOnline = useIsOnline()
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', onFsChange)
+    return () => document.removeEventListener('fullscreenchange', onFsChange)
+  }, [])
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen()
+    } else {
+      document.exitFullscreen()
+    }
+  }, [])
 
   const showCalendar = settings.showCalendar && isOnline
   const showWeather = settings.showWeather && isOnline
 
   return (
     <Box sx={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
-      {/* 設定ボタン */}
+      {/* ヘッダーバー */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
+        <Tooltip title={isFullscreen ? 'フルスクリーン終了' : 'フルスクリーン'}>
+          <IconButton onClick={toggleFullscreen}>
+            {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+          </IconButton>
+        </Tooltip>
         <Tooltip title="設定">
           <IconButton onClick={() => navigate('/settings')}>
             <SettingsIcon />
