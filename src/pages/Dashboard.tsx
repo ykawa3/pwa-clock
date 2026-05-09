@@ -1,18 +1,76 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Box, IconButton, Tooltip } from '@mui/material'
+import { Box, IconButton, Tooltip, Paper, Typography } from '@mui/material'
 import SettingsIcon from '@mui/icons-material/Settings'
 import FullscreenIcon from '@mui/icons-material/Fullscreen'
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit'
+import EditIcon from '@mui/icons-material/Edit'
+import DoneIcon from '@mui/icons-material/Done'
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
 import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../context/SettingsContext'
 import ClockWidget from '../components/ClockWidget'
 import CalendarWidget from '../components/CalendarWidget'
 import WeatherWidget from '../components/WeatherWidget'
 
+const LAYOUT_STORAGE_KEY = 'dashboard_widget_layout_v2'
+
+type SlotPosition =
+  | 'top-left' | 'top-center' | 'top-right'
+  | 'middle-left' | 'middle-center' | 'middle-right'
+  | 'bottom-left' | 'bottom-center' | 'bottom-right'
+
+interface WidgetConfig {
+  id: string
+  label: string
+  slot: SlotPosition
+}
+
+const DEFAULT_LAYOUT: WidgetConfig[] = [
+  { id: 'clock', label: '時計', slot: 'top-center' },
+  { id: 'calendar', label: 'カレンダー', slot: 'bottom-left' },
+  { id: 'weather', label: '天気', slot: 'bottom-right' },
+]
+
+const ALL_SLOTS: SlotPosition[] = [
+  'top-left', 'top-center', 'top-right',
+  'middle-left', 'middle-center', 'middle-right',
+  'bottom-left', 'bottom-center', 'bottom-right',
+]
+
+const SLOT_LABELS: Record<SlotPosition, string> = {
+  'top-left': '左上',
+  'top-center': '中央上',
+  'top-right': '右上',
+  'middle-left': '左中',
+  'middle-center': '中央',
+  'middle-right': '右中',
+  'bottom-left': '左下',
+  'bottom-center': '中央下',
+  'bottom-right': '右下',
+}
+
+function loadLayout(): WidgetConfig[] {
+  try {
+    const saved = localStorage.getItem(LAYOUT_STORAGE_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      const ids = parsed.map((w: WidgetConfig) => w.id)
+      if (DEFAULT_LAYOUT.every((d) => ids.includes(d.id))) {
+        return parsed
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return DEFAULT_LAYOUT
+}
+
+function saveLayout(layout: WidgetConfig[]) {
+  localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layout))
+}
+
 function useIsLandscape() {
-  const [landscape, setLandscape] = useState(
-    window.matchMedia('(orientation: landscape)').matches
-  )
+  const [landscape, setLandscape] = useState(window.matchMedia('(orientation: landscape)').matches)
   useEffect(() => {
     const mq = window.matchMedia('(orientation: landscape)')
     const handler = (e: MediaQueryListEvent) => setLandscape(e.matches)
@@ -37,12 +95,31 @@ function useIsOnline() {
   return online
 }
 
+function WidgetRenderer({ id }: { id: string }) {
+  switch (id) {
+    case 'clock':
+      return <ClockWidget />
+    case 'calendar':
+      return <CalendarWidget />
+    case 'weather':
+      return <WeatherWidget />
+    default:
+      return null
+  }
+}
+
+type Row = 'top' | 'middle' | 'bottom'
+type Col = 'left' | 'center' | 'right'
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const { settings } = useSettings()
   const isLandscape = useIsLandscape()
   const isOnline = useIsOnline()
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [editMode, setEditMode] = useState(false)
+  const [layout, setLayout] = useState<WidgetConfig[]>(loadLayout)
+  const [draggedWidget, setDraggedWidget] = useState<string | null>(null)
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement)
@@ -58,13 +135,255 @@ export default function Dashboard() {
     }
   }, [])
 
-  const showCalendar = settings.showCalendar && isOnline
-  const showWeather = settings.showWeather && isOnline
+  const isWidgetVisible = (id: string) => {
+    if (id === 'calendar') return settings.showCalendar && isOnline
+    if (id === 'weather') return settings.showWeather && isOnline
+    return true
+  }
+
+  const visibleWidgets = layout.filter((w) => isWidgetVisible(w.id))
+
+  const getWidgetInSlot = (slot: SlotPosition) => {
+    return visibleWidgets.find((w) => w.slot === slot)
+  }
+
+  const handleDragStart = (e: React.DragEvent, widgetId: string) => {
+    setDraggedWidget(widgetId)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', widgetId)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDropOnSlot = (e: React.DragEvent, targetSlot: SlotPosition) => {
+    e.preventDefault()
+    const sourceId = draggedWidget
+    if (!sourceId) {
+      setDraggedWidget(null)
+      return
+    }
+
+    setLayout((prev) => {
+      const existingInTarget = prev.find((w) => w.slot === targetSlot)
+      const source = prev.find((w) => w.id === sourceId)
+      if (!source) return prev
+
+      const sourceSlot = source.slot
+
+      const newLayout = prev.map((w) => {
+        if (w.id === sourceId) {
+          return { ...w, slot: targetSlot }
+        }
+        if (existingInTarget && w.id === existingInTarget.id) {
+          return { ...w, slot: sourceSlot }
+        }
+        return w
+      })
+
+      saveLayout(newLayout)
+      return newLayout
+    })
+    setDraggedWidget(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedWidget(null)
+  }
+
+  // 通常表示（横向き）: 行ごとに表示し、各行内では左右に詰める
+  const renderCompactLandscape = () => {
+    const rowOrder: Row[] = ['top', 'middle', 'bottom']
+    const colOrder: Col[] = ['left', 'center', 'right']
+
+    // 各行に属するウィジェットを列順で収集
+    const rowWidgets: Record<Row, WidgetConfig[]> = {
+      top: [],
+      middle: [],
+      bottom: [],
+    }
+    for (const row of rowOrder) {
+      for (const col of colOrder) {
+        const slot = `${row}-${col}` as SlotPosition
+        const widget = getWidgetInSlot(slot)
+        if (widget) {
+          rowWidgets[row].push(widget)
+        }
+      }
+    }
+
+    // 使用中の行だけ表示
+    const activeRows = rowOrder.filter((row) => rowWidgets[row].length > 0)
+
+    if (activeRows.length === 0) return null
+
+    return (
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: 2,
+          px: 2,
+          pb: 2,
+        }}
+      >
+        {activeRows.map((row) => {
+          const widgets = rowWidgets[row]
+          return (
+            <Box
+              key={row}
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 3,
+              }}
+            >
+              {widgets.map((widget) => (
+                <Box key={widget.id}>
+                  <WidgetRenderer id={widget.id} />
+                </Box>
+              ))}
+            </Box>
+          )
+        })}
+      </Box>
+    )
+  }
+
+  // 編集モード: 3x3グリッド全スロット表示
+  const renderEditGrid = () => {
+    return (
+      <Box
+        sx={{
+          flex: 1,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gridTemplateRows: '1fr 1fr 1fr',
+          gap: 1.5,
+          px: 2,
+          pb: 2,
+        }}
+      >
+        {ALL_SLOTS.map((slot) => {
+          const widget = getWidgetInSlot(slot)
+          const isDropTarget = draggedWidget && (!widget || widget.id !== draggedWidget)
+
+          return (
+            <Box
+              key={slot}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 80,
+                borderRadius: 2,
+                border: '2px dashed',
+                borderColor: isDropTarget ? 'primary.main' : 'divider',
+                bgcolor: widget ? 'transparent' : 'action.hover',
+                p: 1,
+                transition: 'all 0.2s',
+              }}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDropOnSlot(e, slot)}
+            >
+              {widget ? (
+                <Box
+                  sx={{
+                    position: 'relative',
+                    width: '100%',
+                    opacity: draggedWidget === widget.id ? 0.4 : 1,
+                    cursor: 'grab',
+                    '&:active': { cursor: 'grabbing' },
+                  }}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, widget.id)}
+                  onDragEnd={handleDragEnd}
+                >
+                  <Paper
+                    elevation={4}
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      zIndex: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'rgba(0,0,0,0.55)',
+                      borderRadius: 2,
+                      gap: 1,
+                    }}
+                  >
+                    <DragIndicatorIcon sx={{ color: 'white' }} />
+                    <Typography variant="body2" sx={{ color: 'white', fontWeight: 600 }}>
+                      {widget.label}
+                    </Typography>
+                  </Paper>
+                  <Box sx={{ pointerEvents: 'none' }}>
+                    <WidgetRenderer id={widget.id} />
+                  </Box>
+                </Box>
+              ) : (
+                <Typography variant="caption" color="text.disabled">
+                  {SLOT_LABELS[slot]}
+                </Typography>
+              )}
+            </Box>
+          )
+        })}
+      </Box>
+    )
+  }
+
+  // 縦向き通常表示: 行順で詰めて表示
+  const renderCompactPortrait = () => {
+    const rowOrder: SlotPosition[] = [
+      'top-left', 'top-center', 'top-right',
+      'middle-left', 'middle-center', 'middle-right',
+      'bottom-left', 'bottom-center', 'bottom-right',
+    ]
+
+    const orderedWidgets = rowOrder
+      .map((slot) => getWidgetInSlot(slot))
+      .filter(Boolean) as WidgetConfig[]
+
+    return (
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          px: 2,
+          pb: 2,
+          justifyContent: 'center',
+        }}
+      >
+        {orderedWidgets.map((w) => (
+          <Box key={w.id}>
+            <WidgetRenderer id={w.id} />
+          </Box>
+        ))}
+      </Box>
+    )
+  }
 
   return (
     <Box sx={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       {/* ヘッダーバー */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1, gap: 0.5 }}>
+        <Tooltip title={editMode ? 'レイアウト編集を終了' : 'レイアウトを編集'}>
+          <IconButton onClick={() => setEditMode(!editMode)} color={editMode ? 'primary' : 'default'}>
+            {editMode ? <DoneIcon /> : <EditIcon />}
+          </IconButton>
+        </Tooltip>
         <Tooltip title={isFullscreen ? 'フルスクリーン終了' : 'フルスクリーン'}>
           <IconButton onClick={toggleFullscreen}>
             {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
@@ -77,48 +396,22 @@ export default function Dashboard() {
         </Tooltip>
       </Box>
 
-      {/* メインコンテンツ */}
-      {isLandscape ? (
-        // 横向き: 左に時計、右にカレンダー＆天気
-        <Box
-          sx={{
-            flex: 1,
-            display: 'grid',
-            gridTemplateColumns: showCalendar || showWeather ? '1fr 1fr' : '1fr',
-            gap: 2,
-            px: 2,
-            pb: 2,
-            alignItems: 'center',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ClockWidget />
-          </Box>
-          {(showCalendar || showWeather) && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {showCalendar && <CalendarWidget />}
-              {showWeather && <WeatherWidget />}
-            </Box>
-          )}
-        </Box>
-      ) : (
-        // 縦向き: 垂直スタック
-        <Box
-          sx={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-            px: 2,
-            pb: 2,
-            justifyContent: 'center',
-          }}
-        >
-          <ClockWidget />
-          {showCalendar && <CalendarWidget />}
-          {showWeather && <WeatherWidget />}
+      {/* 編集モードの説明 */}
+      {editMode && (
+        <Box sx={{ textAlign: 'center', pb: 1 }}>
+          <Typography variant="caption" color="text.secondary">
+            ウィジェットをドラッグして好きな位置に配置（スワップ可能）
+          </Typography>
         </Box>
       )}
+
+      {/* メインコンテンツ */}
+      {editMode
+        ? renderEditGrid()
+        : isLandscape
+          ? renderCompactLandscape()
+          : renderCompactPortrait()
+      }
     </Box>
   )
 }
