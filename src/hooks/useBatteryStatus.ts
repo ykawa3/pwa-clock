@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react'
 
+interface BatteryManager extends EventTarget {
+  level: number
+  charging: boolean
+  addEventListener(type: 'levelchange' | 'chargingchange', listener: EventListener): void
+  removeEventListener(type: 'levelchange' | 'chargingchange', listener: EventListener): void
+}
+
 interface BatteryStatus {
   level: number | null
   charging: boolean
