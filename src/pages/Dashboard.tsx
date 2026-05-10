@@ -8,9 +8,25 @@ import DoneIcon from '@mui/icons-material/Done'
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
 import BedtimeOffIcon from '@mui/icons-material/BedtimeOff'
 import BedtimeIcon from '@mui/icons-material/Bedtime'
+import Battery0BarIcon from '@mui/icons-material/Battery0Bar'
+import Battery1BarIcon from '@mui/icons-material/Battery1Bar'
+import Battery2BarIcon from '@mui/icons-material/Battery2Bar'
+import Battery3BarIcon from '@mui/icons-material/Battery3Bar'
+import Battery4BarIcon from '@mui/icons-material/Battery4Bar'
+import Battery5BarIcon from '@mui/icons-material/Battery5Bar'
+import Battery6BarIcon from '@mui/icons-material/Battery6Bar'
+import BatteryFullIcon from '@mui/icons-material/BatteryFull'
+import BatteryCharging20Icon from '@mui/icons-material/BatteryCharging20'
+import BatteryCharging30Icon from '@mui/icons-material/BatteryCharging30'
+import BatteryCharging50Icon from '@mui/icons-material/BatteryCharging50'
+import BatteryCharging60Icon from '@mui/icons-material/BatteryCharging60'
+import BatteryCharging80Icon from '@mui/icons-material/BatteryCharging80'
+import BatteryCharging90Icon from '@mui/icons-material/BatteryCharging90'
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../context/SettingsContext'
 import { useWakeLock } from '../hooks/useWakeLock'
+import { useBatteryStatus } from '../hooks/useBatteryStatus'
 import ClockWidget from '../components/ClockWidget'
 import CalendarWidget from '../components/CalendarWidget'
 import WeatherWidget from '../components/WeatherWidget'
@@ -114,11 +130,35 @@ function WidgetRenderer({ id }: { id: string }) {
 type Row = 'top' | 'middle' | 'bottom'
 type Col = 'left' | 'center' | 'right'
 
+function BatteryStatusIcon({ level, charging }: { level: number; charging: boolean }) {
+  const pct = Math.round(level * 100)
+  const color = level <= 0.1 ? 'error' : level <= 0.2 ? 'warning' : 'inherit'
+  const props = { color, fontSize: 'small' } as const
+  if (charging) {
+    if (pct <= 20) return <BatteryCharging20Icon {...props} />
+    if (pct <= 30) return <BatteryCharging30Icon {...props} />
+    if (pct <= 50) return <BatteryCharging50Icon {...props} />
+    if (pct <= 60) return <BatteryCharging60Icon {...props} />
+    if (pct <= 80) return <BatteryCharging80Icon {...props} />
+    if (pct <= 90) return <BatteryCharging90Icon {...props} />
+    return <BatteryChargingFullIcon {...props} />
+  }
+  if (pct <= 12) return <Battery0BarIcon {...props} />
+  if (pct <= 25) return <Battery1BarIcon {...props} />
+  if (pct <= 37) return <Battery2BarIcon {...props} />
+  if (pct <= 50) return <Battery3BarIcon {...props} />
+  if (pct <= 62) return <Battery4BarIcon {...props} />
+  if (pct <= 75) return <Battery5BarIcon {...props} />
+  if (pct <= 87) return <Battery6BarIcon {...props} />
+  return <BatteryFullIcon {...props} />
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const { settings, updateSetting } = useSettings()
   const isLandscape = useIsLandscape()
   useWakeLock(settings.keepAwake)
+  const battery = useBatteryStatus()
   const isOnline = useIsOnline()
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [editMode, setEditMode] = useState(false)
@@ -382,30 +422,49 @@ export default function Dashboard() {
   return (
     <Box sx={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       {/* ヘッダーバー */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1, gap: 0.5 }}>
-        <Tooltip title={editMode ? 'レイアウト編集を終了' : 'レイアウトを編集'}>
-          <IconButton onClick={() => setEditMode(!editMode)} color={editMode ? 'primary' : 'default'}>
-            {editMode ? <DoneIcon /> : <EditIcon />}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={settings.keepAwake ? 'スリープ無効（タップで有効に）' : 'スリープ有効（タップで無効に）'}>
-          <IconButton
-            onClick={() => updateSetting('keepAwake', !settings.keepAwake)}
-            color={settings.keepAwake ? 'primary' : 'default'}
-          >
-            {settings.keepAwake ? <BedtimeOffIcon /> : <BedtimeIcon />}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={isFullscreen ? 'フルスクリーン終了' : 'フルスクリーン'}>
-          <IconButton onClick={toggleFullscreen}>
-            {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="設定">
-          <IconButton onClick={() => navigate('/settings')}>
-            <SettingsIcon />
-          </IconButton>
-        </Tooltip>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1 }}>
+        {/* バッテリー残量 */}
+        {battery.level !== null ? (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pl: 0.5 }}>
+            <BatteryStatusIcon level={battery.level} charging={battery.charging} />
+            <Typography
+              variant="caption"
+              sx={{
+                color: battery.level <= 0.1 ? 'error.main' : battery.level <= 0.2 ? 'warning.main' : 'text.secondary',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {Math.round(battery.level * 100)}%
+            </Typography>
+          </Box>
+        ) : (
+          <Box />
+        )}
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <Tooltip title={editMode ? 'レイアウト編集を終了' : 'レイアウトを編集'}>
+            <IconButton onClick={() => setEditMode(!editMode)} color={editMode ? 'primary' : 'default'}>
+              {editMode ? <DoneIcon /> : <EditIcon />}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={settings.keepAwake ? 'スリープ無効（タップで有効に）' : 'スリープ有効（タップで無効に）'}>
+            <IconButton
+              onClick={() => updateSetting('keepAwake', !settings.keepAwake)}
+              color={settings.keepAwake ? 'primary' : 'default'}
+            >
+              {settings.keepAwake ? <BedtimeOffIcon /> : <BedtimeIcon />}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={isFullscreen ? 'フルスクリーン終了' : 'フルスクリーン'}>
+            <IconButton onClick={toggleFullscreen}>
+              {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="設定">
+            <IconButton onClick={() => navigate('/settings')}>
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Box>
 
       {/* 編集モードの説明 */}

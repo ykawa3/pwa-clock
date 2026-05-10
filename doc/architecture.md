@@ -41,7 +41,8 @@
 │   ├── context/
 │   │   └── SettingsContext.tsx ← 設定 (LocalStorage 永続化)
 │   ├── hooks/
-│   │   └── useWakeLock.ts      ← Screen Wake Lock API 管理
+│   │   ├── useWakeLock.ts      ← Screen Wake Lock API 管理
+│   │   └── useBatteryStatus.ts ← Battery Status API 管理
 │   └── pages/
 │       ├── Dashboard.tsx       ← メイン画面
 │       └── Settings.tsx        ← 設定画面
@@ -156,6 +157,24 @@ export function useWakeLock(enabled: boolean): boolean
 - `visibilitychange` イベントを購読し、タブが再表示されたときにロックを再取得する（バックグラウンドで OS が自動解放するため）
 - アンマウント時または `enabled=false` 時に `lock.release()` でロックを解放
 - 戻り値: ロックが現在有効かどうか (`boolean`)
+
+## 6.6 useBatteryStatus フック
+
+**ファイル:** `src/hooks/useBatteryStatus.ts`
+
+```typescript
+interface BatteryStatus {
+  level: number | null  // 0.0〜1.0、API 非対応時は null
+  charging: boolean
+}
+
+export function useBatteryStatus(): BatteryStatus
+```
+
+- `navigator.getBattery?.()` で `BatteryManager` を取得
+- `levelchange` / `chargingchange` イベントを購読して state を更新
+- アンマウント時にイベントリスナーを解除
+- API 非対応時は `{ level: null, charging: false }` を返す
 
 ---
 
