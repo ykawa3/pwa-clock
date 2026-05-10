@@ -8,7 +8,7 @@ import holidaysData from '@holiday-jp/holiday_jp'
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
 const TOTAL_CELLS = 42 // 6行 × 7列で固定
 
-function buildCalendarDays(year: number, month: number): (number | null)[] {
+export function buildCalendarDays(year: number, month: number): (number | null)[] {
   const firstDay = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const cells: (number | null)[] = Array(firstDay).fill(null)
@@ -17,7 +17,7 @@ function buildCalendarDays(year: number, month: number): (number | null)[] {
   return cells
 }
 
-function getHolidaysForMonth(year: number, month: number): Map<number, string> {
+export function getHolidaysForMonth(year: number, month: number): Map<number, string> {
   const holidays = new Map<number, string>()
   const allHolidays = holidaysData.between(
     new Date(year, month, 1),

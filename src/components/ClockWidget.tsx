@@ -4,7 +4,7 @@ import { useSettings } from '../context/SettingsContext'
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
 
-function formatTime(date: Date, show24Hour: boolean, showSeconds: boolean): string {
+export function formatTime(date: Date, show24Hour: boolean, showSeconds: boolean): string {
   if (show24Hour) {
     const hh = String(date.getHours()).padStart(2, '0')
     const mm = String(date.getMinutes()).padStart(2, '0')
@@ -21,7 +21,7 @@ function formatTime(date: Date, show24Hour: boolean, showSeconds: boolean): stri
   }
 }
 
-function formatDate(date: Date): string {
+export function formatDate(date: Date): string {
   const y = date.getFullYear()
   const m = date.getMonth() + 1
   const d = date.getDate()
