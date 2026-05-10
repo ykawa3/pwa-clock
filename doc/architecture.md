@@ -40,6 +40,8 @@
 │   │   └── OfflineBanner.tsx   ← オフライン通知
 │   ├── context/
 │   │   └── SettingsContext.tsx ← 設定 (LocalStorage 永続化)
+│   ├── hooks/
+│   │   └── useWakeLock.ts      ← Screen Wake Lock API 管理
 │   └── pages/
 │       ├── Dashboard.tsx       ← メイン画面
 │       └── Settings.tsx        ← 設定画面
@@ -111,6 +113,7 @@ interface Settings {
   showCalendar: boolean    // カレンダーウィジェット表示
   showWeather: boolean     // 天気ウィジェット表示
   weatherApiKey: string    // OpenWeatherMap API キー
+  keepAwake: boolean       // スリープ無効化 (Wake Lock)
 }
 ```
 
@@ -131,12 +134,28 @@ App.tsx
              ├─ OfflineBanner     ← online/offline イベント
              └─ Routes
                  ├─ Dashboard (/)
+                 │   ├─ useWakeLock()   ← settings.keepAwake
                  │   ├─ ClockWidget     ← useSettings()
                  │   ├─ CalendarWidget  ← useSettings() + isOnline
                  │   └─ WeatherWidget   ← useSettings() + isOnline + Geolocation
                  └─ Settings (/settings)
                      └─ updateSetting() → SettingsContext → LocalStorage
 ```
+
+---
+
+## 6.5 useWakeLock フック
+
+**ファイル:** `src/hooks/useWakeLock.ts`
+
+```typescript
+export function useWakeLock(enabled: boolean): boolean
+```
+
+- `enabled=true` かつ `'wakeLock' in navigator` のとき `navigator.wakeLock.request('screen')` を呼び出す
+- `visibilitychange` イベントを購読し、タブが再表示されたときにロックを再取得する（バックグラウンドで OS が自動解放するため）
+- アンマウント時または `enabled=false` 時に `lock.release()` でロックを解放
+- 戻り値: ロックが現在有効かどうか (`boolean`)
 
 ---
 

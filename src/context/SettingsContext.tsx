@@ -7,6 +7,7 @@ interface Settings {
   showCalendar: boolean
   showWeather: boolean
   weatherApiKey: string
+  keepAwake: boolean
 }
 
 const DEFAULTS: Settings = {
@@ -15,6 +16,7 @@ const DEFAULTS: Settings = {
   showCalendar: true,
   showWeather: true,
   weatherApiKey: '',
+  keepAwake: true,
 }
 
 const STORAGE_KEY = 'pwa-clock-settings'

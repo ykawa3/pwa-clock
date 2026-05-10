@@ -6,8 +6,11 @@ import FullscreenExitIcon from '@mui/icons-material/FullscreenExit'
 import EditIcon from '@mui/icons-material/Edit'
 import DoneIcon from '@mui/icons-material/Done'
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
+import BedtimeOffIcon from '@mui/icons-material/BedtimeOff'
+import BedtimeIcon from '@mui/icons-material/Bedtime'
 import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../context/SettingsContext'
+import { useWakeLock } from '../hooks/useWakeLock'
 import ClockWidget from '../components/ClockWidget'
 import CalendarWidget from '../components/CalendarWidget'
 import WeatherWidget from '../components/WeatherWidget'
@@ -113,8 +116,9 @@ type Col = 'left' | 'center' | 'right'
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { settings } = useSettings()
+  const { settings, updateSetting } = useSettings()
   const isLandscape = useIsLandscape()
+  useWakeLock(settings.keepAwake)
   const isOnline = useIsOnline()
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [editMode, setEditMode] = useState(false)
@@ -382,6 +386,14 @@ export default function Dashboard() {
         <Tooltip title={editMode ? 'レイアウト編集を終了' : 'レイアウトを編集'}>
           <IconButton onClick={() => setEditMode(!editMode)} color={editMode ? 'primary' : 'default'}>
             {editMode ? <DoneIcon /> : <EditIcon />}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={settings.keepAwake ? 'スリープ無効（タップで有効に）' : 'スリープ有効（タップで無効に）'}>
+          <IconButton
+            onClick={() => updateSetting('keepAwake', !settings.keepAwake)}
+            color={settings.keepAwake ? 'primary' : 'default'}
+          >
+            {settings.keepAwake ? <BedtimeOffIcon /> : <BedtimeIcon />}
           </IconButton>
         </Tooltip>
         <Tooltip title={isFullscreen ? 'フルスクリーン終了' : 'フルスクリーン'}>

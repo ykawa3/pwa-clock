@@ -82,6 +82,25 @@ export default function Settings() {
             />
           </Paper>
 
+          {/* ディスプレイ設定 */}
+          <Paper elevation={2} sx={{ p: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+              ディスプレイ
+            </Typography>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={settings.keepAwake}
+                  onChange={e => updateSetting('keepAwake', e.target.checked)}
+                />
+              }
+              label="スリープを無効にする"
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+              画面を常時点灯させます（対応ブラウザのみ）
+            </Typography>
+          </Paper>
+
           {/* 天気 API 設定 */}
           <Paper elevation={2} sx={{ p: 2, borderRadius: 2 }}>
             <Typography variant="subtitle1" sx={{ mb: 0.5, fontWeight: 600 }}>

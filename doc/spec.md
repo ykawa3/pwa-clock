@@ -5,10 +5,10 @@
 
 ## 2. 技術スタック
 - **Framework**: React (Vite)
-- **UI Library**: Material UI (MUI) v6
+- **UI Library**: Material UI (MUI) v9
 - **PWA**: vite-plugin-pwa (Workbox)
 - **State Management**: React Context API / LocalStorage (設定保存用)
-- **Icons**: Lucide React / MUI Icons
+- **Icons**: MUI Icons
 - **Weather API**: OpenWeatherMap API (or Similar)
 
 ## 3. 主要機能
@@ -36,6 +36,17 @@
   - カレンダー
   - 天気予報
 - 設定はブラウザの LocalStorage に保存され、次回アクセス時も維持される。
+
+### 3.6 ウィジェット配置
+- ダッシュボードは 3×3 グリッドのスロットを持つ。
+- 編集モードでウィジェットをドラッグ&ドロップして自由に並び替え可能（スワップ方式）。
+- レイアウトは LocalStorage に保存される。
+
+### 3.7 スリープ無効化 (Wake Lock)
+- Screen Wake Lock API を利用してデバイスのスリープを防止する。
+- ダッシュボードのヘッダーボタンまたは設定画面のトグルでオン/オフを切り替えられる。
+- デフォルトは ON（常時表示が前提の置き時計用途のため）。
+- API 非対応ブラウザでは無効化のみ（エラーは発生しない）。
 
 ## 4. レスポンシブ & デザイン設計
 

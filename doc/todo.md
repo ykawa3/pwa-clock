@@ -11,10 +11,12 @@ spec.md の要件との対照表。
 | 天気予報ウィジェット | ✅ 完了 | 現在天気・Geolocation・30分更新 |
 | オフライン対応 (PWA) | ✅ 完了 | Service Worker・OfflineBanner |
 | ウィジェット・マネージャー | ✅ 完了 | 設定画面でトグル切り替え |
-| フルスクリーン対応 | ✅ 完了 | ClockWidget にボタン実装 |
+| フルスクリーン対応 | ✅ 完了 | Dashboard ヘッダーにボタン実装 |
 | レスポンシブ (Portrait/Landscape) | ✅ 完了 | Dashboard でレイアウト切り替え |
 | LocalStorage 設定保存 | ✅ 完了 | SettingsContext で永続化 |
 | GitHub Pages デプロイ | ✅ 完了 | HashRouter + base パス設定 |
+| ウィジェット配置編集 | ✅ 完了 | 3×3 グリッド・ドラッグ&ドロップ・LocalStorage 保存 |
+| スリープ無効化 (Wake Lock) | ✅ 完了 | `useWakeLock` フック・ヘッダーボタン・設定画面トグル |
 
 ---
 
