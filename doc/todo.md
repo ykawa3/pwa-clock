@@ -25,6 +25,15 @@ spec.md の要件との対照表。
 
 ### 機能追加
 
+- [ ] **天気予報に本日の最高気温・最低気温を表示する**
+  - OpenWeatherMap `/data/2.5/forecast` の当日分データから min/max を集計して表示する
+  - 現在の WeatherWidget に「今日の最高/最低」として追加表示する
+
+- [ ] **アプリの明示的なアップデート手段を実装する**
+  - PWA の Service Worker キャッシュにより、ユーザーが古いバージョンを使い続けることがある
+  - 新しい SW が待機中のとき「アップデートがあります」バナーを表示し、タップで即時適用する
+  - `vite-plugin-pwa` の `useRegisterSW` フックで `needRefresh` / `updateServiceWorker` を利用する
+
 - [ ] **天気: 位置情報の取得方法を選択できるようにする**
   - 現在は Geolocation (GPS) のみ
   - 設定画面で「GPS を使用する」/ 「地域を手動選択する」を切り替えられるようにする
