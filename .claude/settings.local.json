@@ -1,7 +1,54 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(git -C /workspaces/pwa-clock log --oneline -20)",
+      "Bash(npx tsc *)",
+      "Bash(python3 -c ' *)",
+      "Bash(npm run *)",
+      "Bash(npm test *)",
+      "Bash(ls *)",
+      "Read(**/.env.sample)",
+      "Read(**/.env.example)",
+      "Bash(npm run *)",
+      "Bash(npm test *)",
+      "Bash(npx prettier *)",
+      "Bash(npx eslint *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(grep *)"
+    ],
+    "deny": [
+      "Bash(rm *)",
+      "Read(**/.env*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.gnupg/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.azure/**)",
+      "Read(~/.kube/**)",
+      "Read(~/.npmrc)",
+      "Read(~/.git-credentials)",
+      "Read(~/.config/gh/**)",
+      "Edit(**/.bashrc)",
+      "Edit(**/.bash_profile)",
+      "Edit(**/.zshrc)",
+      "Edit(**/.config/fish/**)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(nc *)",
+      "Bash(ssh *)",
+      "Bash(git push *)"
+    ],
+    "ask": [
+      "Bash(git *)"
     ]
+  },
+  "sandbox": {
+    "enabled": true, 
+    "autoAllowBashIfSandboxed": false, 
+    "allowUnsandboxedCommands": false 
   }
 }

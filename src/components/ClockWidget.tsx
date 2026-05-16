@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Box, Typography } from '@mui/material'
 import { useSettings } from '../context/SettingsContext'
+import { useSizeScale } from '../context/SizeScaleContext'
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -31,6 +32,7 @@ export function formatDate(date: Date): string {
 
 export default function ClockWidget() {
   const { settings } = useSettings()
+  const scale = useSizeScale()
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function ClockWidget() {
         sx={{
           fontFamily: '"Roboto Mono", monospace',
           fontWeight: 300,
-          fontSize: { xs: '15vw', sm: '12vw', md: '9vw' },
+          fontSize: { xs: `${15 * scale}vw`, sm: `${12 * scale}vw`, md: `${9 * scale}vw` },
           lineHeight: 1.1,
           letterSpacing: '-0.02em',
           color: 'primary.light',

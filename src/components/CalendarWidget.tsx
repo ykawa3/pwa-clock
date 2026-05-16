@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Box, Typography, Grid, Paper, IconButton } from '@mui/material'
+import { useSizeScale } from '../context/SizeScaleContext'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import TodayIcon from '@mui/icons-material/Today'
@@ -31,6 +32,7 @@ export function getHolidaysForMonth(year: number, month: number): Map<number, st
 }
 
 export default function CalendarWidget() {
+  const scale = useSizeScale()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
@@ -130,32 +132,57 @@ export default function CalendarWidget() {
             <Grid key={i} size={1}>
               <Box
                 sx={{
-                  textAlign: 'center',
-                  mx: 'auto',
-                  width: 28,
-                  height: 28,
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%',
-                  bgcolor: isToday ? 'primary.main' : 'transparent',
-                  border: isHoliday && !isToday ? '2px solid' : 'none',
-                  borderColor: isHoliday && !isToday ? 'error.main' : 'transparent',
-                  cursor: holidayName ? 'help' : 'default',
+                  minHeight: Math.round(42 * scale),
+                  py: 0.25,
                 }}
-                title={holidayName || undefined}
               >
-                {d && (
+                {/* 日付サークル */}
+                <Box
+                  sx={{
+                    width: Math.round(28 * scale),
+                    height: Math.round(28 * scale),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '50%',
+                    bgcolor: isToday ? 'primary.main' : 'transparent',
+                    flexShrink: 0,
+                  }}
+                >
+                  {d && (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: isToday ? '#fff' : color,
+                        fontWeight: isToday || isHoliday ? 700 : 400,
+                        lineHeight: 1,
+                        fontSize: `${0.8 * scale}rem`,
+                      }}
+                    >
+                      {d}
+                    </Typography>
+                  )}
+                </Box>
+                {/* 祝日名 */}
+                {d && holidayName && (
                   <Typography
-                    variant="body2"
                     sx={{
-                      color: isToday ? '#fff' : color,
-                      fontWeight: isToday || isHoliday ? 700 : 400,
-                      lineHeight: 1,
-                      fontSize: '0.8rem',
+                      fontSize: `${0.55 * scale}rem`,
+                      color: 'error.main',
+                      lineHeight: 1.1,
+                      textAlign: 'center',
+                      overflow: 'hidden',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      wordBreak: 'break-all',
+                      px: 0.25,
                     }}
                   >
-                    {d}
+                    {holidayName}
                   </Typography>
                 )}
               </Box>

@@ -55,6 +55,40 @@ describe('SettingsContext', () => {
     expect(result.current.settings.keepAwake).toBe(false)
   })
 
+  it('useApiKey のデフォルト値は false', () => {
+    const { result } = renderHook(() => useSettings(), { wrapper: SettingsProvider })
+    expect(result.current.settings.useApiKey).toBe(false)
+  })
+
+  it('updateSetting で useApiKey を変更できる', () => {
+    const { result } = renderHook(() => useSettings(), { wrapper: SettingsProvider })
+    act(() => { result.current.updateSetting('useApiKey', true) })
+    expect(result.current.settings.useApiKey).toBe(true)
+  })
+
+  it('displaySize のデフォルト値は medium', () => {
+    const { result } = renderHook(() => useSettings(), { wrapper: SettingsProvider })
+    expect(result.current.settings.displaySize).toBe('medium')
+  })
+
+  it('updateSetting で displaySize を変更できる', () => {
+    const { result } = renderHook(() => useSettings(), { wrapper: SettingsProvider })
+
+    act(() => {
+      result.current.updateSetting('displaySize', 'large')
+    })
+
+    expect(result.current.settings.displaySize).toBe('large')
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!)
+    expect(stored.displaySize).toBe('large')
+  })
+
+  it('localStorage に displaySize が保存されていれば復元される', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ displaySize: 'small' }))
+    const { result } = renderHook(() => useSettings(), { wrapper: SettingsProvider })
+    expect(result.current.settings.displaySize).toBe('small')
+  })
+
   it('Provider 外で useSettings を使うとエラー', () => {
     expect(() => renderHook(() => useSettings())).toThrow()
   })

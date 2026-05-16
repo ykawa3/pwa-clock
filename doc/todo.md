@@ -18,6 +18,10 @@ spec.md の要件との対照表。
 | ウィジェット配置編集 | ✅ 完了 | 3×3 グリッド・ドラッグ&ドロップ・LocalStorage 保存 |
 | スリープ無効化 (Wake Lock) | ✅ 完了 | `useWakeLock` フック・ヘッダーボタン・設定画面トグル |
 | バッテリー残量表示 | ✅ 完了 | `useBatteryStatus` フック・ヘッダー左側にアイコン＋% 表示 |
+| 天気: 位置情報の手動選択 | ✅ 完了 | GPS / 都市名検索 / プリセット12都市をダイアログで切り替え |
+| 天気予報表示 (5日間) | ✅ 完了 | `/data/2.5/forecast` で最高/最低気温つき5日間表示 |
+| カレンダーの月切り替え | ✅ 完了 | 前月/翌月ボタン・今日に戻るボタン実装済み |
+| 表示サイズ設定 | ✅ 完了 | 小/中/大トグル・MUI テーマ動的生成・SizeScaleContext で各ウィジェットに反映 |
 
 ---
 
@@ -25,44 +29,45 @@ spec.md の要件との対照表。
 
 ### 機能追加
 
-- [ ] **天気予報に本日の最高気温・最低気温を表示する**
-  - OpenWeatherMap `/data/2.5/forecast` の当日分データから min/max を集計して表示する
-  - 現在の WeatherWidget に「今日の最高/最低」として追加表示する
+- [x] **天気予報に本日の最高気温・最低気温を表示する**
+  - `/data/2.5/forecast` の当日 3h スロットから min/max を集計し、現在天気欄に ↑XX° ↓XX° で表示
 
-- [ ] **アプリの明示的なアップデート手段を実装する**
-  - PWA の Service Worker キャッシュにより、ユーザーが古いバージョンを使い続けることがある
-  - 新しい SW が待機中のとき「アップデートがあります」バナーを表示し、タップで即時適用する
-  - `vite-plugin-pwa` の `useRegisterSW` フックで `needRefresh` / `updateServiceWorker` を利用する
+- [x] **アプリの明示的なアップデート手段を実装する**
+  - `registerType: 'prompt'` に変更し、自動適用を停止
+  - 新しい SW 検出時に画面上部に「今すぐ更新」バナーを表示（`UpdateBanner.tsx`）
+  - `useRegisterSW` の `needRefresh` / `updateServiceWorker` を使用
 
-- [ ] **天気: 位置情報の取得方法を選択できるようにする**
-  - 現在は Geolocation (GPS) のみ
-  - 設定画面で「GPS を使用する」/ 「地域を手動選択する」を切り替えられるようにする
-  - 手動選択時は都市名またはテキスト入力で地域を指定する
+- [x] **表示サイズ設定（スマホ / タブレット / デスクトップ）**
+  - タブレットと小型スマホで最適なアイコンサイズ・文字サイズが異なる
+  - 設定画面に「表示サイズ」セレクター（小 / 中 / 大）を追加し、SettingsContext に保存する
+  - 各ウィジェットのフォントサイズ・アイコンサイズ・余白をテーマ変数で切り替える
 
-- [ ] **ウィジェットの表示位置をユーザーが変更できるようにする**
-  - 時計・カレンダー・天気の並び順と配置（左・中・右、上・下）を設定画面で変更できるようにする
-  - 設定を LocalStorage に保存する
+- [x] **ウィジェット編集のモバイル対応（タッチドラッグ）**
+  - タップで選択 → 移動先スロットをタップで移動（スワップ対応）
+  - デスクトップ向けの HTML5 Drag & Drop も引き続き動作
+  - 選択中はスロットをアンバーハイライト、移動可能スロットに「ここに移動」を表示
+
+- [x] **カレンダーウィジェットの UI 改善（卓上カレンダー風）**
+  - 各セルを上下 2 段構成（上：日付サークル、下：祝日名テキスト）に変更
+  - 祝日名を常時表示（ホバー不要）、2 行まで折り返し表示
+
+- [ ] **ウィジェット追加: 日めくりカレンダー**
+  - 今日の日付・曜日・祝日名を大きく表示する日めくりカレンダー風ウィジェット
+  - 毎日 00:00 に自動で日付が切り替わる
+  - 既存の CalendarWidget とは独立した新規コンポーネントとして実装する
+
+- [ ] **ウィジェット追加: アナログ時計**
+  - SVG で描画するアナログ時計ウィジェット
+  - 秒針・分針・時針をアニメーション表示する
+  - 既存の ClockWidget（デジタル）と同様に useSettings で 12h/24h 設定を参照する
+  - Dashboard の 3×3 グリッドに追加できるように WidgetRenderer に登録する
 
 - [ ] **テーマ切り替え (ダーク / ライト)**
-  - spec.md §3.5 に記載あり、Settings 画面に未実装
+  - Settings 画面に未実装
   - SettingsContext に `theme: 'dark' | 'light'` を追加し、App.tsx の `createTheme` を動的化する
-
-- [ ] **天気予報表示 (今日以降の数日間)**
-  - 現在は現在天気のみ (`/data/2.5/weather`)
-  - OpenWeatherMap `/data/2.5/forecast` (3時間ごと5日間) を活用する
 
 - [ ] **GitHub Actions による自動デプロイ**
   - `main` ブランチへの push 時に `npm run build` → `dist/` を gh-pages ブランチへデプロイ
-
-### UI 改善
-
-- [x] **天気ウィジェットのコンテンツを中央揃えにする**
-  - 現在は左揃え (`display: flex` の初期値)
-  - `justifyContent: 'center'` または `textAlign: 'center'` で中央に寄せる
-
-- [x] **カレンダーの月切り替えボタンを追加する**
-  - カレンダー上部に「◀ 前月 / 翌月 ▶」ボタンを追加
-  - 表示月を state で管理し、今月以外の場合は「今月に戻る」ボタンも表示する
 
 ### コード品質改善
 
@@ -78,28 +83,18 @@ spec.md の要件との対照表。
 
 ## 進行中の設計・実装タスク
 
-### 天気ウィジェット: APIキー不要モード対応
-
-**方針:** 設定画面にトグルを追加し、ON/OFF で天気 API を切り替える。
+### ✅ 天気ウィジェット: APIキー不要モード対応
 
 | トグル | 使用 API | 備考 |
 |---|---|---|
-| OFF (デフォルト) | [Open-Meteo](https://open-meteo.com/) | 無料・キー不要 |
-| ON | OpenWeatherMap | 現行実装、APIキー入力が必要 |
+| OFF (デフォルト) | Open-Meteo | 無料・キー不要 |
+| ON | OpenWeatherMap | APIキー入力が必要 |
 
-**実装ステップ:**
-
-- [ ] `SettingsContext` に `useApiKey: boolean` を追加 (デフォルト: `false`)
-- [ ] `Settings.tsx` に「OpenWeatherMap APIキーを使用する」スイッチを追加
-  - OFF 時は APIキー入力欄を非表示にする
-- [ ] `WeatherWidget.tsx` を分岐
-  - `useApiKey === false` → Open-Meteo API で取得
-  - `useApiKey === true` → 従来の OpenWeatherMap で取得
-- [ ] Open-Meteo レスポンス → `WeatherData` 型へのマッピング実装
-  - 天気コードは WMO 形式 (OpenWeatherMap の `icon` 文字列とは別体系)
-  - `WeatherIcon` コンポーネントのアイコンマッピングを WMO コードに対応させる
-- [ ] 都市名の取得: Open-Meteo は都市名を返さないため、Nominatim (OSM Reverse Geocoding) を使用
-  - エンドポイント: `https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json`
+- [x] `SettingsContext` に `useApiKey: boolean` を追加 (デフォルト: `false`)
+- [x] `Settings.tsx` に「OpenWeatherMap API キーを使用する」スイッチを追加（OFF 時は入力欄を非表示）
+- [x] `WeatherWidget.tsx`: `useApiKey` で API を切り替え
+- [x] `wmoCodeToIcon` / `wmoCodeToDescription` で WMO コードを変換
+- [x] 都市名を Nominatim (OSM Reverse Geocoding) で取得
 
 ---
 

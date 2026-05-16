@@ -88,6 +88,22 @@ function saveLayout(layout: WidgetConfig[]) {
   localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layout))
 }
 
+export function swapWidgets(
+  layout: WidgetConfig[],
+  sourceId: string,
+  targetSlot: SlotPosition
+): WidgetConfig[] {
+  const source = layout.find((w) => w.id === sourceId)
+  if (!source || source.slot === targetSlot) return layout
+  const existingInTarget = layout.find((w) => w.slot === targetSlot)
+  const sourceSlot = source.slot
+  return layout.map((w) => {
+    if (w.id === sourceId) return { ...w, slot: targetSlot }
+    if (existingInTarget && w.id === existingInTarget.id) return { ...w, slot: sourceSlot }
+    return w
+  })
+}
+
 function useIsLandscape() {
   const [landscape, setLandscape] = useState(window.matchMedia('(orientation: landscape)').matches)
   useEffect(() => {
@@ -164,6 +180,7 @@ export default function Dashboard() {
   const [editMode, setEditMode] = useState(false)
   const [layout, setLayout] = useState<WidgetConfig[]>(loadLayout)
   const [draggedWidget, setDraggedWidget] = useState<string | null>(null)
+  const [selectedWidget, setSelectedWidget] = useState<string | null>(null)
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement)
@@ -191,8 +208,18 @@ export default function Dashboard() {
     return visibleWidgets.find((w) => w.slot === slot)
   }
 
+  const moveWidgetToSlot = useCallback((sourceId: string, targetSlot: SlotPosition) => {
+    setLayout((prev) => {
+      const next = swapWidgets(prev, sourceId, targetSlot)
+      if (next === prev) return prev
+      saveLayout(next)
+      return next
+    })
+  }, [])
+
   const handleDragStart = (e: React.DragEvent, widgetId: string) => {
     setDraggedWidget(widgetId)
+    setSelectedWidget(null)
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', widgetId)
   }
@@ -204,37 +231,29 @@ export default function Dashboard() {
 
   const handleDropOnSlot = (e: React.DragEvent, targetSlot: SlotPosition) => {
     e.preventDefault()
-    const sourceId = draggedWidget
-    if (!sourceId) {
-      setDraggedWidget(null)
-      return
-    }
-
-    setLayout((prev) => {
-      const existingInTarget = prev.find((w) => w.slot === targetSlot)
-      const source = prev.find((w) => w.id === sourceId)
-      if (!source) return prev
-
-      const sourceSlot = source.slot
-
-      const newLayout = prev.map((w) => {
-        if (w.id === sourceId) {
-          return { ...w, slot: targetSlot }
-        }
-        if (existingInTarget && w.id === existingInTarget.id) {
-          return { ...w, slot: sourceSlot }
-        }
-        return w
-      })
-
-      saveLayout(newLayout)
-      return newLayout
-    })
+    if (draggedWidget) moveWidgetToSlot(draggedWidget, targetSlot)
     setDraggedWidget(null)
   }
 
   const handleDragEnd = () => {
     setDraggedWidget(null)
+  }
+
+  const handleSlotTap = (slot: SlotPosition) => {
+    const widget = getWidgetInSlot(slot)
+    if (selectedWidget) {
+      if (widget?.id === selectedWidget) {
+        // 同じウィジェットを再タップ → 選択解除
+        setSelectedWidget(null)
+      } else {
+        // 別スロットをタップ → 移動
+        moveWidgetToSlot(selectedWidget, slot)
+        setSelectedWidget(null)
+      }
+    } else if (widget) {
+      // ウィジェットをタップ → 選択
+      setSelectedWidget(widget.id)
+    }
   }
 
   // 通常表示（横向き）: 行ごとに表示し、各行内では左右に詰める
@@ -315,7 +334,10 @@ export default function Dashboard() {
       >
         {ALL_SLOTS.map((slot) => {
           const widget = getWidgetInSlot(slot)
-          const isDropTarget = draggedWidget && (!widget || widget.id !== draggedWidget)
+          const isSelected = widget?.id === selectedWidget
+          const isDragging = draggedWidget === widget?.id
+          const isDropTarget = (draggedWidget || selectedWidget) && (!widget || (!isDragging && !isSelected))
+          const isMoveTarget = selectedWidget && widget?.id !== selectedWidget
 
           return (
             <Box
@@ -327,11 +349,23 @@ export default function Dashboard() {
                 minHeight: 80,
                 borderRadius: 2,
                 border: '2px dashed',
-                borderColor: isDropTarget ? 'primary.main' : 'divider',
-                bgcolor: widget ? 'transparent' : 'action.hover',
+                borderColor: isSelected
+                  ? 'warning.main'
+                  : isDropTarget
+                    ? 'primary.main'
+                    : 'divider',
+                bgcolor: isSelected
+                  ? 'rgba(255,193,7,0.08)'
+                  : isMoveTarget
+                    ? 'rgba(144,202,249,0.08)'
+                    : widget
+                      ? 'transparent'
+                      : 'action.hover',
                 p: 1,
                 transition: 'all 0.2s',
+                cursor: editMode ? 'pointer' : 'default',
               }}
+              onClick={() => handleSlotTap(slot)}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDropOnSlot(e, slot)}
             >
@@ -340,7 +374,7 @@ export default function Dashboard() {
                   sx={{
                     position: 'relative',
                     width: '100%',
-                    opacity: draggedWidget === widget.id ? 0.4 : 1,
+                    opacity: isDragging ? 0.4 : 1,
                     cursor: 'grab',
                     '&:active': { cursor: 'grabbing' },
                   }}
@@ -360,7 +394,7 @@ export default function Dashboard() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      bgcolor: 'rgba(0,0,0,0.55)',
+                      bgcolor: isSelected ? 'rgba(255,193,7,0.75)' : 'rgba(0,0,0,0.55)',
                       borderRadius: 2,
                       gap: 1,
                     }}
@@ -375,8 +409,8 @@ export default function Dashboard() {
                   </Box>
                 </Box>
               ) : (
-                <Typography variant="caption" color="text.disabled">
-                  {SLOT_LABELS[slot]}
+                <Typography variant="caption" color={isMoveTarget ? 'primary.light' : 'text.disabled'}>
+                  {isMoveTarget ? 'ここに移動' : SLOT_LABELS[slot]}
                 </Typography>
               )}
             </Box>
@@ -442,7 +476,7 @@ export default function Dashboard() {
         )}
         <Box sx={{ display: 'flex', gap: 0.5 }}>
           <Tooltip title={editMode ? 'レイアウト編集を終了' : 'レイアウトを編集'}>
-            <IconButton onClick={() => setEditMode(!editMode)} color={editMode ? 'primary' : 'default'}>
+            <IconButton onClick={() => { setEditMode(!editMode); setSelectedWidget(null) }} color={editMode ? 'primary' : 'default'}>
               {editMode ? <DoneIcon /> : <EditIcon />}
             </IconButton>
           </Tooltip>
@@ -471,7 +505,9 @@ export default function Dashboard() {
       {editMode && (
         <Box sx={{ textAlign: 'center', pb: 1 }}>
           <Typography variant="caption" color="text.secondary">
-            ウィジェットをドラッグして好きな位置に配置（スワップ可能）
+            {selectedWidget
+              ? '移動先のスロットをタップ（同じウィジェットをタップで解除）'
+              : 'タップで選択 → 移動先をタップ　またはドラッグ＆ドロップ'}
           </Typography>
         </Box>
       )}
