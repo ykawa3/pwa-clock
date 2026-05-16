@@ -1,6 +1,8 @@
 import { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 
+export type DisplaySize = 'small' | 'medium' | 'large'
+
 interface Settings {
   show24Hour: boolean
   showSeconds: boolean
@@ -8,6 +10,7 @@ interface Settings {
   showWeather: boolean
   weatherApiKey: string
   keepAwake: boolean
+  displaySize: DisplaySize
 }
 
 const DEFAULTS: Settings = {
@@ -17,6 +20,7 @@ const DEFAULTS: Settings = {
   showWeather: true,
   weatherApiKey: '',
   keepAwake: true,
+  displaySize: 'medium',
 }
 
 const STORAGE_KEY = 'pwa-clock-settings'

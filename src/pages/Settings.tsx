@@ -8,10 +8,13 @@ import {
   Button,
   Divider,
   Stack,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../context/SettingsContext'
+import type { DisplaySize } from '../context/SettingsContext'
 
 export default function Settings() {
   const navigate = useNavigate()
@@ -54,6 +57,26 @@ export default function Settings() {
               }
               label="秒を表示"
             />
+          </Paper>
+
+          {/* 表示サイズ */}
+          <Paper elevation={2} sx={{ p: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+              表示サイズ
+            </Typography>
+            <ToggleButtonGroup
+              value={settings.displaySize}
+              exclusive
+              onChange={(_, v: DisplaySize | null) => v && updateSetting('displaySize', v)}
+              size="small"
+            >
+              <ToggleButton value="small">小</ToggleButton>
+              <ToggleButton value="medium">中</ToggleButton>
+              <ToggleButton value="large">大</ToggleButton>
+            </ToggleButtonGroup>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+              フォント・アイコン・間隔のサイズを変更します
+            </Typography>
           </Paper>
 
           {/* ウィジェット表示 */}

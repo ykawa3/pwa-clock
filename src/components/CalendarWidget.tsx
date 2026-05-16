@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Box, Typography, Grid, Paper, IconButton } from '@mui/material'
+import { useSizeScale } from '../context/SizeScaleContext'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import TodayIcon from '@mui/icons-material/Today'
@@ -31,6 +32,7 @@ export function getHolidaysForMonth(year: number, month: number): Map<number, st
 }
 
 export default function CalendarWidget() {
+  const scale = useSizeScale()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
@@ -132,8 +134,8 @@ export default function CalendarWidget() {
                 sx={{
                   textAlign: 'center',
                   mx: 'auto',
-                  width: 28,
-                  height: 28,
+                  width: Math.round(28 * scale),
+                  height: Math.round(28 * scale),
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -152,7 +154,7 @@ export default function CalendarWidget() {
                       color: isToday ? '#fff' : color,
                       fontWeight: isToday || isHoliday ? 700 : 400,
                       lineHeight: 1,
-                      fontSize: '0.8rem',
+                      fontSize: `${0.8 * scale}rem`,
                     }}
                   >
                     {d}

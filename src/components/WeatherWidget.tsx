@@ -22,6 +22,7 @@ import GrainIcon from '@mui/icons-material/Grain'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import EditLocationIcon from '@mui/icons-material/EditLocation'
 import { useSettings } from '../context/SettingsContext'
+import { useSizeScale } from '../context/SizeScaleContext'
 import { useNavigate } from 'react-router-dom'
 
 interface WeatherData {
@@ -166,6 +167,7 @@ function saveLocation(location: LocationData) {
 
 export default function WeatherWidget() {
   const { settings } = useSettings()
+  const scale = useSizeScale()
   const navigate = useNavigate()
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [forecast, setForecast] = useState<DailyForecast[]>([])
@@ -359,7 +361,7 @@ export default function WeatherWidget() {
           <>
             {/* 現在の天気 */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <WeatherIcon icon={weather.icon} />
+              <WeatherIcon icon={weather.icon} size={Math.round(48 * scale)} />
               <Box sx={{ flex: 1 }}>
                 <Typography variant="h4" sx={{ fontWeight: 300, lineHeight: 1 }}>
                   {weather.temp}°C
@@ -416,7 +418,7 @@ export default function WeatherWidget() {
                       <Typography variant="caption" sx={{ fontWeight: 500, whiteSpace: 'nowrap' }}>
                         {day.date}
                       </Typography>
-                      <WeatherIcon icon={day.icon} size={28} />
+                      <WeatherIcon icon={day.icon} size={Math.round(28 * scale)} />
                       <Typography
                         variant="caption"
                         color="text.secondary"
