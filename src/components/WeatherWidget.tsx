@@ -31,6 +31,8 @@ interface WeatherData {
   city: string
   humidity: number
   feelsLike: number
+  todayTempMax: number
+  todayTempMin: number
 }
 
 interface DailyForecast {
@@ -132,6 +134,22 @@ function groupForecastByDay(list: any[]): DailyForecast[] {
   return result.slice(0, 5)
 }
 
+function getTodayMinMax(list: any[]): { tempMax: number; tempMin: number } | null {
+  const today = new Date()
+  const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`
+  const temps = list
+    .filter(item => {
+      const dt = new Date(item.dt * 1000)
+      return `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}` === todayKey
+    })
+    .map(item => item.main.temp)
+  if (temps.length === 0) return null
+  return {
+    tempMax: Math.round(Math.max(...temps)),
+    tempMin: Math.round(Math.min(...temps)),
+  }
+}
+
 function loadSavedLocation(): LocationData | null {
   try {
     const saved = localStorage.getItem(LOCATION_STORAGE_KEY)
@@ -176,13 +194,16 @@ export default function WeatherWidget() {
           throw new Error(`天気の取得に失敗しました (${weatherRes.status})`)
         }
         const weatherData = await weatherRes.json()
+        const currentTemp = Math.round(weatherData.main.temp)
         setWeather({
-          temp: Math.round(weatherData.main.temp),
+          temp: currentTemp,
           description: weatherData.weather[0].description,
           icon: weatherData.weather[0].icon,
           city: weatherData.name,
           humidity: weatherData.main.humidity,
           feelsLike: Math.round(weatherData.main.feels_like),
+          todayTempMax: currentTemp,
+          todayTempMin: currentTemp,
         })
 
         // 予報を取得
@@ -192,6 +213,10 @@ export default function WeatherWidget() {
           const forecastData = await forecastRes.json()
           const daily = groupForecastByDay(forecastData.list)
           setForecast(daily)
+          const todayMM = getTodayMinMax(forecastData.list)
+          if (todayMM) {
+            setWeather(prev => prev ? { ...prev, ...todayMM } : prev)
+          }
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : '天気の取得に失敗しました')
@@ -344,6 +369,11 @@ export default function WeatherWidget() {
                 </Typography>
                 <Typography variant="caption" color="text.disabled">
                   体感 {weather.feelsLike}°C · 湿度 {weather.humidity}%
+                </Typography>
+                <Typography variant="caption">
+                  <Box component="span" sx={{ color: 'error.main' }}>↑{weather.todayTempMax}°</Box>
+                  {' '}
+                  <Box component="span" sx={{ color: 'info.main' }}>↓{weather.todayTempMin}°</Box>
                 </Typography>
               </Box>
               <Button

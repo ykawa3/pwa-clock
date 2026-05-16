@@ -47,8 +47,8 @@
     ]
   },
   "sandbox": {
-    "enabled": true, // サンドボックスの有効化
-    "autoAllowBashIfSandboxed": false, // サンドボックスの有効時にBashコマンドを自動承認。デフォルトはtrue
-    "allowUnsandboxedCommands": false // サンドボックス外でのコマンド実行（エスケープハッチ）の有効/無効
+    "enabled": true, 
+    "autoAllowBashIfSandboxed": false, 
+    "allowUnsandboxedCommands": false 
   }
 }
