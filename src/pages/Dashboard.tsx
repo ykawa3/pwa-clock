@@ -88,6 +88,22 @@ function saveLayout(layout: WidgetConfig[]) {
   localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layout))
 }
 
+export function swapWidgets(
+  layout: WidgetConfig[],
+  sourceId: string,
+  targetSlot: SlotPosition
+): WidgetConfig[] {
+  const source = layout.find((w) => w.id === sourceId)
+  if (!source || source.slot === targetSlot) return layout
+  const existingInTarget = layout.find((w) => w.slot === targetSlot)
+  const sourceSlot = source.slot
+  return layout.map((w) => {
+    if (w.id === sourceId) return { ...w, slot: targetSlot }
+    if (existingInTarget && w.id === existingInTarget.id) return { ...w, slot: sourceSlot }
+    return w
+  })
+}
+
 function useIsLandscape() {
   const [landscape, setLandscape] = useState(window.matchMedia('(orientation: landscape)').matches)
   useEffect(() => {
@@ -194,18 +210,10 @@ export default function Dashboard() {
 
   const moveWidgetToSlot = useCallback((sourceId: string, targetSlot: SlotPosition) => {
     setLayout((prev) => {
-      const existingInTarget = prev.find((w) => w.slot === targetSlot)
-      const source = prev.find((w) => w.id === sourceId)
-      if (!source || source.slot === targetSlot) return prev
-
-      const sourceSlot = source.slot
-      const newLayout = prev.map((w) => {
-        if (w.id === sourceId) return { ...w, slot: targetSlot }
-        if (existingInTarget && w.id === existingInTarget.id) return { ...w, slot: sourceSlot }
-        return w
-      })
-      saveLayout(newLayout)
-      return newLayout
+      const next = swapWidgets(prev, sourceId, targetSlot)
+      if (next === prev) return prev
+      saveLayout(next)
+      return next
     })
   }, [])
 
