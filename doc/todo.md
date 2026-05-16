@@ -32,10 +32,10 @@ spec.md の要件との対照表。
 - [x] **天気予報に本日の最高気温・最低気温を表示する**
   - `/data/2.5/forecast` の当日 3h スロットから min/max を集計し、現在天気欄に ↑XX° ↓XX° で表示
 
-- [ ] **アプリの明示的なアップデート手段を実装する**
-  - PWA の Service Worker キャッシュにより、ユーザーが古いバージョンを使い続けることがある
-  - 新しい SW が待機中のとき「アップデートがあります」バナーを表示し、タップで即時適用する
-  - `vite-plugin-pwa` の `useRegisterSW` フックで `needRefresh` / `updateServiceWorker` を利用する
+- [x] **アプリの明示的なアップデート手段を実装する**
+  - `registerType: 'prompt'` に変更し、自動適用を停止
+  - 新しい SW 検出時に画面上部に「今すぐ更新」バナーを表示（`UpdateBanner.tsx`）
+  - `useRegisterSW` の `needRefresh` / `updateServiceWorker` を使用
 
 - [x] **表示サイズ設定（スマホ / タブレット / デスクトップ）**
   - タブレットと小型スマホで最適なアイコンサイズ・文字サイズが異なる

@@ -4,6 +4,7 @@ import { createTheme, ThemeProvider, CssBaseline } from '@mui/material'
 import { SettingsProvider, useSettings } from './context/SettingsContext'
 import { SizeScaleContext } from './context/SizeScaleContext'
 import OfflineBanner from './components/OfflineBanner'
+import UpdateBanner from './components/UpdateBanner'
 import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
 
@@ -37,6 +38,7 @@ export default function App() {
     <SettingsProvider>
       <ThemeWrapper>
         <CssBaseline />
+        <UpdateBanner />
         <HashRouter>
           <OfflineBanner />
           <Routes>
