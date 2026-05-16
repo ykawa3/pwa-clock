@@ -11,6 +11,7 @@ interface Settings {
   weatherApiKey: string
   keepAwake: boolean
   displaySize: DisplaySize
+  useApiKey: boolean
 }
 
 const DEFAULTS: Settings = {
@@ -21,6 +22,7 @@ const DEFAULTS: Settings = {
   weatherApiKey: '',
   keepAwake: true,
   displaySize: 'medium',
+  useApiKey: false,
 }
 
 const STORAGE_KEY = 'pwa-clock-settings'

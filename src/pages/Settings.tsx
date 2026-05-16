@@ -127,19 +127,32 @@ export default function Settings() {
           {/* 天気 API 設定 */}
           <Paper elevation={2} sx={{ p: 2, borderRadius: 2 }}>
             <Typography variant="subtitle1" sx={{ mb: 0.5, fontWeight: 600 }}>
-              OpenWeatherMap API キー
+              天気 API 設定
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-              天気予報の表示に必要です。openweathermap.org で無料取得できます。
-            </Typography>
-            <TextField
-              fullWidth
-              size="small"
-              type="password"
-              placeholder="APIキーを入力"
-              value={settings.weatherApiKey}
-              onChange={e => updateSetting('weatherApiKey', e.target.value)}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={settings.useApiKey}
+                  onChange={e => updateSetting('useApiKey', e.target.checked)}
+                />
+              }
+              label="OpenWeatherMap API キーを使用する"
             />
+            {settings.useApiKey && (
+              <>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                  天気予報の表示に必要です。openweathermap.org で無料取得できます。
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="password"
+                  placeholder="APIキーを入力"
+                  value={settings.weatherApiKey}
+                  onChange={e => updateSetting('weatherApiKey', e.target.value)}
+                />
+              </>
+            )}
           </Paper>
         </Stack>
       </Box>

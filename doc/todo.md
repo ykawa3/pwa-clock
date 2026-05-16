@@ -83,28 +83,18 @@ spec.md の要件との対照表。
 
 ## 進行中の設計・実装タスク
 
-### 天気ウィジェット: APIキー不要モード対応
-
-**方針:** 設定画面にトグルを追加し、ON/OFF で天気 API を切り替える。
+### ✅ 天気ウィジェット: APIキー不要モード対応
 
 | トグル | 使用 API | 備考 |
 |---|---|---|
-| OFF (デフォルト) | [Open-Meteo](https://open-meteo.com/) | 無料・キー不要 |
-| ON | OpenWeatherMap | 現行実装、APIキー入力が必要 |
+| OFF (デフォルト) | Open-Meteo | 無料・キー不要 |
+| ON | OpenWeatherMap | APIキー入力が必要 |
 
-**実装ステップ:**
-
-- [ ] `SettingsContext` に `useApiKey: boolean` を追加 (デフォルト: `false`)
-- [ ] `Settings.tsx` に「OpenWeatherMap APIキーを使用する」スイッチを追加
-  - OFF 時は APIキー入力欄を非表示にする
-- [ ] `WeatherWidget.tsx` を分岐
-  - `useApiKey === false` → Open-Meteo API で取得
-  - `useApiKey === true` → 従来の OpenWeatherMap で取得
-- [ ] Open-Meteo レスポンス → `WeatherData` 型へのマッピング実装
-  - 天気コードは WMO 形式 (OpenWeatherMap の `icon` 文字列とは別体系)
-  - `WeatherIcon` コンポーネントのアイコンマッピングを WMO コードに対応させる
-- [ ] 都市名の取得: Open-Meteo は都市名を返さないため、Nominatim (OSM Reverse Geocoding) を使用
-  - エンドポイント: `https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json`
+- [x] `SettingsContext` に `useApiKey: boolean` を追加 (デフォルト: `false`)
+- [x] `Settings.tsx` に「OpenWeatherMap API キーを使用する」スイッチを追加（OFF 時は入力欄を非表示）
+- [x] `WeatherWidget.tsx`: `useApiKey` で API を切り替え
+- [x] `wmoCodeToIcon` / `wmoCodeToDescription` で WMO コードを変換
+- [x] 都市名を Nominatim (OSM Reverse Geocoding) で取得
 
 ---
 

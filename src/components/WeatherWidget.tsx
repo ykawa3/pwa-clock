@@ -83,6 +83,83 @@ const UPDATE_INTERVAL = 30 * 60 * 1000
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
 const LOCATION_STORAGE_KEY = 'weather_location'
 
+export function wmoCodeToIcon(code: number): string {
+  if (code === 0) return '01d'
+  if ([1, 2, 3].includes(code)) return '02d'
+  if ([45, 48].includes(code)) return '04d'
+  if ([51, 53, 55, 56, 57].includes(code)) return '09d'
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '10d'
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return '13d'
+  if ([95, 96, 99].includes(code)) return '11d'
+  return '04d'
+}
+
+export function wmoCodeToDescription(code: number): string {
+  if (code === 0) return '快晴'
+  if ([1, 2, 3].includes(code)) return '一部曇り'
+  if ([45, 48].includes(code)) return '霧'
+  if ([51, 53, 55].includes(code)) return '霧雨'
+  if ([56, 57].includes(code)) return '着氷性霧雨'
+  if ([61, 63, 65].includes(code)) return '雨'
+  if ([66, 67].includes(code)) return '着氷性の雨'
+  if ([71, 73, 75].includes(code)) return '雪'
+  if (code === 77) return '霧雪'
+  if ([80, 81, 82].includes(code)) return 'にわか雨'
+  if ([85, 86].includes(code)) return 'にわか雪'
+  if (code === 95) return '雷雨'
+  if ([96, 99].includes(code)) return '激しい雷雨'
+  return '不明'
+}
+
+export async function fetchOpenMeteo(lat: number, lon: number): Promise<{ weather: WeatherData; forecast: DailyForecast[] }> {
+  const meteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=6`
+  const [meteoRes, nominatimRes] = await Promise.all([
+    fetch(meteoUrl),
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`),
+  ])
+
+  if (!meteoRes.ok) throw new Error(`天気の取得に失敗しました (${meteoRes.status})`)
+
+  const meteoData = await meteoRes.json()
+  let city = '不明'
+  if (nominatimRes.ok) {
+    const nominatimData = await nominatimRes.json()
+    const addr = nominatimData.address || {}
+    city = addr.city || addr.town || addr.village || addr.county || '不明'
+  }
+
+  const current = meteoData.current
+  const daily = meteoData.daily
+
+  const weather: WeatherData = {
+    temp: Math.round(current.temperature_2m),
+    description: wmoCodeToDescription(current.weather_code),
+    icon: wmoCodeToIcon(current.weather_code),
+    city,
+    humidity: current.relative_humidity_2m,
+    feelsLike: Math.round(current.apparent_temperature),
+    todayTempMax: Math.round(daily.temperature_2m_max[0]),
+    todayTempMin: Math.round(daily.temperature_2m_min[0]),
+  }
+
+  const forecast: DailyForecast[] = []
+  for (let i = 1; i <= 5; i++) {
+    const dateStr = daily.time[i] as string
+    const dt = new Date(dateStr)
+    const weekday = WEEKDAYS[dt.getDay()]
+    const dateLabel = `${dt.getMonth() + 1}/${dt.getDate()} (${weekday})`
+    forecast.push({
+      date: dateLabel,
+      tempMin: Math.round(daily.temperature_2m_min[i]),
+      tempMax: Math.round(daily.temperature_2m_max[i]),
+      icon: wmoCodeToIcon(daily.weather_code[i]),
+      description: wmoCodeToDescription(daily.weather_code[i]),
+    })
+  }
+
+  return { weather, forecast }
+}
+
 export function groupForecastByDay(list: any[]): DailyForecast[] {
   const dayMap: Record<string, { temps: number[]; icons: string[]; descriptions: string[] }> = {}
 
@@ -182,42 +259,46 @@ export default function WeatherWidget() {
 
   const fetchWeatherByCoords = useCallback(
     async (lat: number, lon: number) => {
-      if (!settings.weatherApiKey) return
+      if (settings.useApiKey && !settings.weatherApiKey) return
 
       setLoading(true)
       setError(null)
       try {
-        // 現在天気を取得
-        const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${settings.weatherApiKey}&units=metric&lang=ja`
-        const weatherRes = await fetch(weatherUrl)
-        if (!weatherRes.ok) {
-          if (weatherRes.status === 401)
-            throw new Error('APIキーが無効です。発行直後は有効化まで最大2時間かかります')
-          throw new Error(`天気の取得に失敗しました (${weatherRes.status})`)
-        }
-        const weatherData = await weatherRes.json()
-        const currentTemp = Math.round(weatherData.main.temp)
-        setWeather({
-          temp: currentTemp,
-          description: weatherData.weather[0].description,
-          icon: weatherData.weather[0].icon,
-          city: weatherData.name,
-          humidity: weatherData.main.humidity,
-          feelsLike: Math.round(weatherData.main.feels_like),
-          todayTempMax: currentTemp,
-          todayTempMin: currentTemp,
-        })
+        if (!settings.useApiKey) {
+          const { weather, forecast } = await fetchOpenMeteo(lat, lon)
+          setWeather(weather)
+          setForecast(forecast)
+        } else {
+          const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${settings.weatherApiKey}&units=metric&lang=ja`
+          const weatherRes = await fetch(weatherUrl)
+          if (!weatherRes.ok) {
+            if (weatherRes.status === 401)
+              throw new Error('APIキーが無効です。発行直後は有効化まで最大2時間かかります')
+            throw new Error(`天気の取得に失敗しました (${weatherRes.status})`)
+          }
+          const weatherData = await weatherRes.json()
+          const currentTemp = Math.round(weatherData.main.temp)
+          setWeather({
+            temp: currentTemp,
+            description: weatherData.weather[0].description,
+            icon: weatherData.weather[0].icon,
+            city: weatherData.name,
+            humidity: weatherData.main.humidity,
+            feelsLike: Math.round(weatherData.main.feels_like),
+            todayTempMax: currentTemp,
+            todayTempMin: currentTemp,
+          })
 
-        // 予報を取得
-        const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${settings.weatherApiKey}&units=metric&lang=ja`
-        const forecastRes = await fetch(forecastUrl)
-        if (forecastRes.ok) {
-          const forecastData = await forecastRes.json()
-          const daily = groupForecastByDay(forecastData.list)
-          setForecast(daily)
-          const todayMM = getTodayMinMax(forecastData.list)
-          if (todayMM) {
-            setWeather(prev => prev ? { ...prev, ...todayMM } : prev)
+          const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${settings.weatherApiKey}&units=metric&lang=ja`
+          const forecastRes = await fetch(forecastUrl)
+          if (forecastRes.ok) {
+            const forecastData = await forecastRes.json()
+            const daily = groupForecastByDay(forecastData.list)
+            setForecast(daily)
+            const todayMM = getTodayMinMax(forecastData.list)
+            if (todayMM) {
+              setWeather(prev => prev ? { ...prev, ...todayMM } : prev)
+            }
           }
         }
       } catch (e) {
@@ -226,11 +307,12 @@ export default function WeatherWidget() {
         setLoading(false)
       }
     },
-    [settings.weatherApiKey]
+    [settings.useApiKey, settings.weatherApiKey]
   )
 
   const fetchWeather = useCallback(async () => {
-    if (!settings.weatherApiKey || !navigator.onLine) return
+    if (settings.useApiKey && !settings.weatherApiKey) return
+    if (!navigator.onLine) return
 
     // 保存済みの位置がある場合はそれを使う
     if (location) {
@@ -258,7 +340,7 @@ export default function WeatherWidget() {
         setError('位置情報を取得できませんでした。下のボタンから地域を選択してください')
       }
     }
-  }, [settings.weatherApiKey, location, fetchWeatherByCoords])
+  }, [settings.useApiKey, settings.weatherApiKey, location, fetchWeatherByCoords])
 
   useEffect(() => {
     fetchWeather()
@@ -317,7 +399,7 @@ export default function WeatherWidget() {
     }
   }
 
-  if (!settings.weatherApiKey) {
+  if (settings.useApiKey && !settings.weatherApiKey) {
     return (
       <Paper elevation={2} sx={{ p: 2, borderRadius: 2, textAlign: 'center' }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
