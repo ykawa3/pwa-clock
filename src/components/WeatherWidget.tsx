@@ -83,7 +83,7 @@ const UPDATE_INTERVAL = 30 * 60 * 1000
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
 const LOCATION_STORAGE_KEY = 'weather_location'
 
-function groupForecastByDay(list: any[]): DailyForecast[] {
+export function groupForecastByDay(list: any[]): DailyForecast[] {
   const dayMap: Record<string, { temps: number[]; icons: string[]; descriptions: string[] }> = {}
 
   for (const item of list) {
@@ -135,7 +135,7 @@ function groupForecastByDay(list: any[]): DailyForecast[] {
   return result.slice(0, 5)
 }
 
-function getTodayMinMax(list: any[]): { tempMax: number; tempMin: number } | null {
+export function getTodayMinMax(list: any[]): { tempMax: number; tempMin: number } | null {
   const today = new Date()
   const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`
   const temps = list
