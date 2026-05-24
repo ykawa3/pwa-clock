@@ -6,9 +6,12 @@ export type DisplaySize = 'small' | 'medium' | 'large'
 interface Settings {
   show24Hour: boolean
   showSeconds: boolean
+  showClock: boolean
   showCalendar: boolean
   showWeather: boolean
   showBattery: boolean
+  showDailyCalendar: boolean
+  showAnalogClock: boolean
   weatherApiKey: string
   keepAwake: boolean
   displaySize: DisplaySize
@@ -18,9 +21,12 @@ interface Settings {
 const DEFAULTS: Settings = {
   show24Hour: true,
   showSeconds: true,
+  showClock: true,
   showCalendar: true,
   showWeather: true,
   showBattery: true,
+  showDailyCalendar: true,
+  showAnalogClock: true,
   weatherApiKey: '',
   keepAwake: true,
   displaySize: 'medium',

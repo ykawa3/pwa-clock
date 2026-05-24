@@ -87,6 +87,16 @@ export default function Settings() {
             <FormControlLabel
               control={
                 <Switch
+                  checked={settings.showClock}
+                  onChange={e => updateSetting('showClock', e.target.checked)}
+                />
+              }
+              label="デジタル時計"
+            />
+            <Divider sx={{ my: 1 }} />
+            <FormControlLabel
+              control={
+                <Switch
                   checked={settings.showCalendar}
                   onChange={e => updateSetting('showCalendar', e.target.checked)}
                 />
@@ -112,6 +122,26 @@ export default function Settings() {
                 />
               }
               label="バッテリー"
+            />
+            <Divider sx={{ my: 1 }} />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={settings.showDailyCalendar}
+                  onChange={e => updateSetting('showDailyCalendar', e.target.checked)}
+                />
+              }
+              label="日めくりカレンダー"
+            />
+            <Divider sx={{ my: 1 }} />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={settings.showAnalogClock}
+                  onChange={e => updateSetting('showAnalogClock', e.target.checked)}
+                />
+              }
+              label="アナログ時計"
             />
           </Paper>
 

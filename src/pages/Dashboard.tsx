@@ -31,8 +31,10 @@ import ClockWidget from '../components/ClockWidget'
 import CalendarWidget from '../components/CalendarWidget'
 import WeatherWidget from '../components/WeatherWidget'
 import BatteryWidget from '../components/BatteryWidget'
+import DailyCalendarWidget from '../components/DailyCalendarWidget'
+import AnalogClockWidget from '../components/AnalogClockWidget'
 
-const LAYOUT_STORAGE_KEY = 'dashboard_widget_layout_v3'
+const LAYOUT_STORAGE_KEY = 'dashboard_widget_layout_v4'
 
 type SlotPosition =
   | 'top-left' | 'top-center' | 'top-right'
@@ -48,6 +50,8 @@ interface WidgetConfig {
 const DEFAULT_LAYOUT: WidgetConfig[] = [
   { id: 'clock', label: '時計', slot: 'top-center' },
   { id: 'battery', label: 'バッテリー', slot: 'top-left' },
+  { id: 'daily-calendar', label: '日めくり', slot: 'top-right' },
+  { id: 'analog-clock', label: 'アナログ時計', slot: 'middle-center' },
   { id: 'calendar', label: 'カレンダー', slot: 'bottom-left' },
   { id: 'weather', label: '天気', slot: 'bottom-right' },
 ]
@@ -138,6 +142,10 @@ function WidgetRenderer({ id }: { id: string }) {
       return <ClockWidget />
     case 'battery':
       return <BatteryWidget />
+    case 'daily-calendar':
+      return <DailyCalendarWidget />
+    case 'analog-clock':
+      return <AnalogClockWidget />
     case 'calendar':
       return <CalendarWidget />
     case 'weather':
@@ -201,7 +209,10 @@ export default function Dashboard() {
   }, [])
 
   const isWidgetVisible = (id: string) => {
+    if (id === 'clock') return settings.showClock
     if (id === 'battery') return settings.showBattery
+    if (id === 'daily-calendar') return settings.showDailyCalendar
+    if (id === 'analog-clock') return settings.showAnalogClock
     if (id === 'calendar') return settings.showCalendar && isOnline
     if (id === 'weather') return settings.showWeather && isOnline
     return true
