@@ -34,7 +34,7 @@ import BatteryWidget from '../components/BatteryWidget'
 import DailyCalendarWidget from '../components/DailyCalendarWidget'
 import AnalogClockWidget from '../components/AnalogClockWidget'
 
-const LAYOUT_STORAGE_KEY = 'dashboard_widget_layout_v4'
+const LAYOUT_STORAGE_KEY = 'dashboard_widget_layout_v5'
 
 type SlotPosition =
   | 'top-left' | 'top-center' | 'top-right'
