@@ -30,8 +30,9 @@ import { useBatteryStatus } from '../hooks/useBatteryStatus'
 import ClockWidget from '../components/ClockWidget'
 import CalendarWidget from '../components/CalendarWidget'
 import WeatherWidget from '../components/WeatherWidget'
+import BatteryWidget from '../components/BatteryWidget'
 
-const LAYOUT_STORAGE_KEY = 'dashboard_widget_layout_v2'
+const LAYOUT_STORAGE_KEY = 'dashboard_widget_layout_v3'
 
 type SlotPosition =
   | 'top-left' | 'top-center' | 'top-right'
@@ -46,6 +47,7 @@ interface WidgetConfig {
 
 const DEFAULT_LAYOUT: WidgetConfig[] = [
   { id: 'clock', label: '時計', slot: 'top-center' },
+  { id: 'battery', label: 'バッテリー', slot: 'top-left' },
   { id: 'calendar', label: 'カレンダー', slot: 'bottom-left' },
   { id: 'weather', label: '天気', slot: 'bottom-right' },
 ]
@@ -134,6 +136,8 @@ function WidgetRenderer({ id }: { id: string }) {
   switch (id) {
     case 'clock':
       return <ClockWidget />
+    case 'battery':
+      return <BatteryWidget />
     case 'calendar':
       return <CalendarWidget />
     case 'weather':
@@ -197,6 +201,7 @@ export default function Dashboard() {
   }, [])
 
   const isWidgetVisible = (id: string) => {
+    if (id === 'battery') return settings.showBattery
     if (id === 'calendar') return settings.showCalendar && isOnline
     if (id === 'weather') return settings.showWeather && isOnline
     return true

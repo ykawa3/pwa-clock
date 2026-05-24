@@ -8,6 +8,7 @@ interface Settings {
   showSeconds: boolean
   showCalendar: boolean
   showWeather: boolean
+  showBattery: boolean
   weatherApiKey: string
   keepAwake: boolean
   displaySize: DisplaySize
@@ -19,6 +20,7 @@ const DEFAULTS: Settings = {
   showSeconds: true,
   showCalendar: true,
   showWeather: true,
+  showBattery: true,
   weatherApiKey: '',
   keepAwake: true,
   displaySize: 'medium',

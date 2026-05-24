@@ -103,6 +103,16 @@ export default function Settings() {
               }
               label="天気予報"
             />
+            <Divider sx={{ my: 1 }} />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={settings.showBattery}
+                  onChange={e => updateSetting('showBattery', e.target.checked)}
+                />
+              }
+              label="バッテリー"
+            />
           </Paper>
 
           {/* ディスプレイ設定 */}
