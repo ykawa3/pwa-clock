@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Antigravity PreToolUse Hook: Security & Permission Guard
- * Converted from .claude/settings.local.json
+ * Antigravity PreToolUse Hook: Security Guard
+ * 危険な操作のみをブロックし、それ以外はすべて自動許可 (allow) します。
  */
 
 function readStdin() {
@@ -39,7 +39,7 @@ function evaluateToolCall(toolCall) {
   if (toolName === 'run_command') {
     const cmd = (args.CommandLine || '').trim();
 
-    // Deny checks
+    // 危険な操作のみ Deny
     const denyPatterns = [
       { pattern: /(?:^|\s|;|&&|\|\|)(?:rm|rmdir|Remove-Item)(?:\s|$)/i, reason: 'rm/削除系コマンドの実行は禁止されています。' },
       { pattern: /(?:^|\s|;|&&|\|\|)curl(?:\s|$)/i, reason: 'curl コマンドの実行は禁止されています。' },
@@ -55,22 +55,6 @@ function evaluateToolCall(toolCall) {
       }
     }
 
-    // Allow checks
-    const allowPatterns = [
-      /^(?:npm\s+(?:install|run|test|ci)|npx\s+(?:tsc|prettier|eslint)|git\s+(?:status|diff|log)|ls|cat|grep|node\s+-v|git\s+-C\s+\S+\s+log)/i
-    ];
-
-    for (const pattern of allowPatterns) {
-      if (pattern.test(cmd)) {
-        return { decision: 'allow' };
-      }
-    }
-
-    // Ask checks (other git commands)
-    if (/^git\s+/i.test(cmd)) {
-      return { decision: 'ask', reason: `Git操作 (${cmd}) の実行確認が必要です。` };
-    }
-
     return { decision: 'allow' };
   }
 
@@ -78,12 +62,10 @@ function evaluateToolCall(toolCall) {
   if (toolName === 'view_file') {
     const targetPath = normalizePath(args.AbsolutePath || '');
 
-    // Allow sample/example env files
     if (/\.env\.(?:sample|example)$/i.test(targetPath)) {
       return { decision: 'allow' };
     }
 
-    // Deny sensitive files
     if (/(?:^|\/)\.env(?:$|\..+)/i.test(targetPath)) {
       return { decision: 'deny', reason: '.env 環境変数ファイルの閲覧はセキュリティ上禁止されています。' };
     }
@@ -138,6 +120,5 @@ async function main() {
 }
 
 main().catch(() => {
-  // Fail-safe
   process.stdout.write(JSON.stringify({ decision: 'allow' }));
 });
