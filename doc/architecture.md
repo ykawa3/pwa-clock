@@ -37,9 +37,11 @@
 │   │   ├── ClockWidget.tsx     ← 時計表示
 │   │   ├── CalendarWidget.tsx  ← 月間カレンダー
 │   │   ├── WeatherWidget.tsx   ← 天気予報
-│   │   └── OfflineBanner.tsx   ← オフライン通知
+│   │   ├── OfflineBanner.tsx   ← オフライン通知
+│   │   └── UpdateBanner.tsx    ← アプリの更新通知
 │   ├── context/
-│   │   └── SettingsContext.tsx ← 設定 (LocalStorage 永続化)
+│   │   ├── SettingsContext.tsx ← 設定 (LocalStorage 永続化)
+│   │   └── SizeScaleContext.tsx ← 表示サイズ管理
 │   ├── hooks/
 │   │   ├── useWakeLock.ts      ← Screen Wake Lock API 管理
 │   │   └── useBatteryStatus.ts ← Battery Status API 管理
@@ -98,6 +100,14 @@
 - `window` の `online` / `offline` イベントを購読
 - MUI `Collapse` でスライドイン/アウトアニメーション
 - `"Offline Mode — カレンダー・天気は利用できません"` を表示
+
+### 4.5 UpdateBanner
+
+**ファイル:** `src/components/UpdateBanner.tsx`
+
+- PWAの新しい Service Worker がインストールされたことを検知して表示
+- `registerType: 'prompt'` に対応
+- ユーザーが「今すぐ更新」をクリックするとアプリをリロードして最新化
 
 ---
 
