@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Box,
   Typography,
@@ -10,15 +11,58 @@ import {
   Stack,
   ToggleButtonGroup,
   ToggleButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Snackbar,
+  Alert,
+  CircularProgress,
 } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
 import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../context/SettingsContext'
 import type { DisplaySize } from '../context/SettingsContext'
+import { usePwaUpdate } from '../hooks/usePwaUpdate'
+import type { UpdateCheckResult } from '../hooks/usePwaUpdate'
 
 export default function Settings() {
   const navigate = useNavigate()
   const { settings, updateSetting } = useSettings()
+  const { checking, checkForUpdate, clearCacheAndReload } = usePwaUpdate()
+
+  // キャッシュクリア確認ダイアログ
+  const [clearDialogOpen, setClearDialogOpen] = useState(false)
+  // スナックバー
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'info' | 'error' }>({
+    open: false, message: '', severity: 'info',
+  })
+
+  const handleCheckUpdate = async () => {
+    const result: UpdateCheckResult = await checkForUpdate()
+    switch (result) {
+      case 'update-found':
+        setSnackbar({ open: true, message: '新しいバージョンが見つかりました。ページをリロードして更新してください。', severity: 'info' })
+        break
+      case 'up-to-date':
+        setSnackbar({ open: true, message: '最新バージョンです ✓', severity: 'success' })
+        break
+      case 'no-sw':
+        setSnackbar({ open: true, message: 'Service Worker が登録されていません（開発環境では無効です）', severity: 'info' })
+        break
+      case 'error':
+        setSnackbar({ open: true, message: '更新チェックに失敗しました', severity: 'error' })
+        break
+    }
+  }
+
+  const handleClearCache = async () => {
+    setClearDialogOpen(false)
+    await clearCacheAndReload()
+  }
 
   return (
     <Box sx={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
@@ -194,8 +238,74 @@ export default function Settings() {
               </>
             )}
           </Paper>
+
+          {/* アプリ情報 */}
+          <Paper elevation={2} sx={{ p: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+              アプリ情報
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              バージョン: {__APP_VERSION__}
+            </Typography>
+            <Stack direction="row" spacing={1.5}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={checking ? <CircularProgress size={16} /> : <RefreshIcon />}
+                onClick={handleCheckUpdate}
+                disabled={checking}
+              >
+                {checking ? '確認中…' : '最新版を確認'}
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                color="warning"
+                startIcon={<DeleteSweepIcon />}
+                onClick={() => setClearDialogOpen(true)}
+              >
+                キャッシュクリア
+              </Button>
+            </Stack>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+              キャッシュクリアするとアプリが再読み込みされます（設定は保持されます）
+            </Typography>
+          </Paper>
         </Stack>
       </Box>
+
+      {/* キャッシュクリア確認ダイアログ */}
+      <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)}>
+        <DialogTitle>キャッシュをクリアしますか？</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            すべてのキャッシュデータを削除し、アプリを再読み込みします。
+            時計やウィジェットの設定は保持されます。
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setClearDialogOpen(false)}>キャンセル</Button>
+          <Button onClick={handleClearCache} color="warning" variant="contained">
+            クリアして再読み込み
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* スナックバー通知 */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity={snackbar.severity}
+          variant="filled"
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

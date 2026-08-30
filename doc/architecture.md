@@ -49,7 +49,8 @@
 │   │   └── SizeScaleContext.ts       ← 表示スケール値の配布
 │   ├── hooks/
 │   │   ├── useWakeLock.ts            ← Screen Wake Lock API
-│   │   └── useBatteryStatus.ts       ← Battery Status API
+│   │   ├── useBatteryStatus.ts       ← Battery Status API
+│   │   └── usePwaUpdate.ts           ← PWA 手動更新・キャッシュクリア
 │   ├── pages/
 │   │   ├── Dashboard.tsx             ← メイン画面 (ウィジェット配置)
 │   │   └── Settings.tsx              ← 設定画面
@@ -185,6 +186,7 @@ interface Settings {
 - 外部 API 不要のローカル計算
 - `@holiday-jp/holiday_jp` の `holidaysData.between(start, end)` で祝日を取得
 - `getHolidaysForMonth(year, month): Map<number, string>` をエクスポート（DailyCalendarWidget が再利用）
+- 卓上カレンダー風 UI: 各セルを上下2段構成（上: 日付サークル、下: 祝日名テキスト）
 
 ### DailyCalendarWidget
 
@@ -197,12 +199,24 @@ interface Settings {
 - Open-Meteo（デフォルト）または OpenWeatherMap（`useApiKey=true`）を使用
 - 30 分間隔で自動更新
 - Nominatim (OSM) で逆ジオコーディング（都市名表示）
+- GPS / 都市名検索 / プリセット12都市の切り替えに対応
 
 ### BatteryWidget
 
 - `useBatteryStatus()` でバッテリー残量・充電状態を取得
 - 大きなアイコン＋パーセンテージを中央表示
 - `level === null` の場合は「バッテリー非対応」を表示
+
+### OfflineBanner
+
+- `window` の `online` / `offline` イベントを購読
+- MUI `Collapse` でスライドイン/アウトアニメーション
+
+### UpdateBanner
+
+- PWAの新しい Service Worker がインストールされたことを検知して表示
+- `registerType: 'prompt'` に対応
+- ユーザーが「今すぐ更新」をクリックするとアプリをリロードして最新化
 
 ---
 
@@ -227,6 +241,20 @@ export function useBatteryStatus(): BatteryStatus
 - `navigator.getBattery?.()` で `BatteryManager` を取得
 - `levelchange` / `chargingchange` イベントを購読
 - 非対応環境: `{ level: null, charging: false }`
+
+### usePwaUpdate
+
+```typescript
+export function usePwaUpdate(): {
+  checking: boolean
+  result: UpdateCheckResult | null
+  checkForUpdate: () => Promise<UpdateCheckResult>
+  clearCacheAndReload: () => Promise<void>
+}
+```
+
+- `checkForUpdate()`: SW の更新を手動チェック → 結果を返す
+- `clearCacheAndReload()`: 全キャッシュ削除 → SW 登録解除 → リロード（LocalStorage は保持）
 
 ---
 
@@ -258,6 +286,7 @@ export function useBatteryStatus(): BatteryStatus
 |---|---|
 | registerType | `prompt`（自動適用しない） |
 | 更新検知 | `UpdateBanner.tsx` が `needRefresh` を監視し「今すぐ更新」バナーを表示 |
+| 手動更新 | Settings 画面の「最新版を確認」「キャッシュクリア」ボタン |
 | テーマカラー | `#121212` |
 | 表示名 | デジタル時計 |
 

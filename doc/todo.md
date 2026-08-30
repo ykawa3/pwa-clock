@@ -2,20 +2,18 @@
 
 ## 実装済み機能
 
-spec.md の要件との対照表。
-
 | 機能 | 状態 | 備考 |
 |---|---|---|
 | デジタル時計ウィジェット | ✅ 完了 | 12h/24h・秒表示・日付・フルスクリーン・ON/OFF設定 |
-| カレンダーウィジェット | ✅ 完了 | 当月表示・今日ハイライト・ローカル計算 |
-| 天気予報ウィジェット | ✅ 完了 | 現在天気・Geolocation・30分更新 |
-| オフライン対応 (PWA) | ✅ 完了 | Service Worker・OfflineBanner |
+| カレンダーウィジェット | ✅ 完了 | 当月表示・今日ハイライト・ローカル計算・卓上カレンダー風UI |
+| 天気予報ウィジェット | ✅ 完了 | APIキー不要モード、Geolocation・30分更新・本日の最高/最低気温表示 |
+| オフライン対応 (PWA) | ✅ 完了 | Service Worker・OfflineBanner・明示的アップデートバナー (`UpdateBanner.tsx`) |
 | ウィジェット・マネージャー | ✅ 完了 | 設定画面で全ウィジェットをトグル切り替え |
 | フルスクリーン対応 | ✅ 完了 | Dashboard ヘッダーにボタン実装 |
 | レスポンシブ (Portrait/Landscape) | ✅ 完了 | Dashboard でレイアウト切り替え |
 | LocalStorage 設定保存 | ✅ 完了 | SettingsContext で永続化 |
 | GitHub Pages デプロイ | ✅ 完了 | HashRouter + base パス設定 |
-| ウィジェット配置編集 | ✅ 完了 | 3×3 グリッド・ドラッグ&ドロップ・LocalStorage 保存 |
+| ウィジェット配置編集 | ✅ 完了 | 3×3 グリッド・ドラッグ&ドロップ・モバイルタッチドラッグ対応 |
 | スリープ無効化 (Wake Lock) | ✅ 完了 | `useWakeLock` フック・ヘッダーボタン・設定画面トグル |
 | バッテリー残量表示 | ✅ 完了 | ヘッダーの小アイコン＋% 表示 + 大表示ウィジェット |
 | 天気: 位置情報の手動選択 | ✅ 完了 | GPS / 都市名検索 / プリセット12都市をダイアログで切り替え |
@@ -65,7 +63,6 @@ spec.md の要件との対照表。
   - `show24Hour=true` のとき時針が24時間で1回転（目盛りも24個に切り替え）
 
 - [ ] **テーマ切り替え (ダーク / ライト)**
-  - Settings 画面に未実装
   - SettingsContext に `theme: 'dark' | 'light'` を追加し、App.tsx の `createTheme` を動的化する
 
 - [ ] **GitHub Actions による自動デプロイ**
@@ -80,23 +77,6 @@ spec.md の要件との対照表。
 - [ ] **PWA アイコン画像の用意**
   - `public/pwa-192x192.png` / `pwa-512x512.png` が SVG ファイルになっている
   - 実際の PNG ファイルを用意してインストール時のアイコン表示を正しくする
-
----
-
-## 進行中の設計・実装タスク
-
-### ✅ 天気ウィジェット: APIキー不要モード対応
-
-| トグル | 使用 API | 備考 |
-|---|---|---|
-| OFF (デフォルト) | Open-Meteo | 無料・キー不要 |
-| ON | OpenWeatherMap | APIキー入力が必要 |
-
-- [x] `SettingsContext` に `useApiKey: boolean` を追加 (デフォルト: `false`)
-- [x] `Settings.tsx` に「OpenWeatherMap API キーを使用する」スイッチを追加（OFF 時は入力欄を非表示）
-- [x] `WeatherWidget.tsx`: `useApiKey` で API を切り替え
-- [x] `wmoCodeToIcon` / `wmoCodeToDescription` で WMO コードを変換
-- [x] 都市名を Nominatim (OSM Reverse Geocoding) で取得
 
 ---
 
